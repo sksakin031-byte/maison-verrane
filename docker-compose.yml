@@ -1,0 +1,45 @@
+# Local test environment: WordPress + MariaDB + WP-CLI.
+# Usage: docker compose up -d   then   sh scripts/setup.sh
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: maison
+      MYSQL_USER: maison
+      MYSQL_PASSWORD: change-me-local-only
+      MYSQL_ROOT_PASSWORD: change-me-root-local-only
+    volumes:
+      - dbdata:/var/lib/mysql
+  wordpress:
+    image: wordpress:6-php8.2-apache
+    restart: unless-stopped
+    depends_on: [db]
+    ports: ["8080:80"]
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: maison
+      WORDPRESS_DB_USER: maison
+      WORDPRESS_DB_PASSWORD: change-me-local-only
+      WORDPRESS_DEBUG: "1"
+    volumes:
+      - wpdata:/var/www/html
+      - ./wp-content/themes/maison-verrane:/var/www/html/wp-content/themes/maison-verrane
+      - ./wp-content/plugins/maison-demo-gateway:/var/www/html/wp-content/plugins/maison-demo-gateway
+  wpcli:
+    image: wordpress:cli-php8.2
+    profiles: ["tools"]
+    depends_on: [db, wordpress]
+    user: "33:33"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: maison
+      WORDPRESS_DB_USER: maison
+      WORDPRESS_DB_PASSWORD: change-me-local-only
+    volumes:
+      - wpdata:/var/www/html
+      - ./wp-content/themes/maison-verrane:/var/www/html/wp-content/themes/maison-verrane
+      - ./wp-content/plugins/maison-demo-gateway:/var/www/html/wp-content/plugins/maison-demo-gateway
+volumes:
+  dbdata:
+  wpdata:
